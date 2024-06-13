@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block title %}Написать рецензию для книги: {{ book.title }}{% endblock %}
+
+{% block content %}
+<h1>Написать рецензию для книги: {{ book.title }}</h1>
+
+<form method="POST" action="{{ url_for('book_form.write_review', book_id=book.id) }}" id="review-form">
+    <div class="mb-3">
+        <label for="rating" class="form-label">Оценка</label>
+        <select class="form-select" id="rating" name="rating" required>
+            {% for key, value in rating_choices.items() %}
+            <option value="{{ key }}">{{ value }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="mb-3">
+        <label for="text" class="form-label">Текст рецензии</label>
+        <textarea id="text" name="text"></textarea>
+    </div>
+    <button type="submit" class="btn btn-primary">Сохранить</button>
+</form>
+
+<script src="https://unpkg.com/easymde/dist/easymde.min.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/easymde/dist/easymde.min.css">
+<script>
+    var easyMDE = new EasyMDE({ element: document.getElementById('text') });
+    document.getElementById('review-form').addEventListener('submit', function () {
+        document.getElementById('text').value = easyMDE.value();
+    });
+</script>
+
+{% endblock %}

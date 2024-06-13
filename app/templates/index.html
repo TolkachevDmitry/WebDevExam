@@ -32,7 +32,7 @@
             <td>{{ book.average_rating }}</td>
             <td>{{ book.review_count }}</td>
             <td>
-                <a href="{{ url_for('book_form.edit_book', book_id=book.id) }}" class="btn btn-info">Просмотр</a>
+                <a href="{{ url_for('book_form.view_book', book_id=book.id) }}" class="btn btn-info">Просмотр</a>
                 <a href="{{ url_for('book_form.edit_book', book_id=book.id) }}" class="btn btn-warning">Редактирование</a>
                 <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal-{{ book.id }}" data-book-id="{{ book.id }}" data-book-title="{{ book.title }}">
                     Удалить

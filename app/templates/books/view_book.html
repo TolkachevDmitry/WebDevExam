@@ -1,44 +1,45 @@
 {% extends "base.html" %}
 
-{% block title %}{{ book.title }}{% endblock %}
+{% block title %}Просмотр книги: {{ book.title }}{% endblock %}
 
 {% block content %}
-<div class="container">
-    <div class="row">
-        <div class="col-md-4">
-            <img src="{{ url_for('static', filename='uploads/' ~ book.cover_image) }}" alt="Обложка книги" class="img-fluid">
-        </div>
-        <div class="col-md-8">
-            <h1>{{ book.title }}</h1>
-            <p><strong>Автор:</strong> {{ book.author }}</p>
-            <p><strong>Жанры:</strong> 
-                {% for genre in book.genres %}
-                    {{ genre.name }}{% if not loop.last %}, {% endif %}
-                {% endfor %}
-            </p>
-            <p><strong>Год издания:</strong> {{ book.year }}</p>
-            <p><strong>Средняя оценка:</strong> {{ book.average_rating }}</p>
-            <h2>Описание</h2>
-            <div>{{ book_description_html|safe }}</div>
-        </div>
-    </div>
+<h1>{{ book.title }}</h1>
+{% if book.cover %}
+    {% set mime_directory = book.cover.mime_type.split('/')[1] %}
+    <img src="{{ url_for('static', filename='images/' ~ mime_directory ~ '/' ~ book.cover.filename) }}" alt="Обложка книги {{ book.title }}">
+{% else %}
+    <p>Обложка отсутствует</p>
+{% endif %}
+<p>Автор: {{ book.author }}</p>
+<p>Год издания: {{ book.year }}</p>
+<p>Описание: {{ book.description }}</p>
 
-    <div class="row mt-5">
-        <div class="col-12">
-            <h2>Рецензии</h2>
-            {% if reviews %}
-                {% for review in reviews %}
-                    <div class="card mb-3">
-                        <div class="card-body">
-                            <h5 class="card-title">{{ review.user.full_name }} - Оценка: {{ review.rating }}</h5>
-                            <p class="card-text">{{ review.text|safe }}</p>
-                        </div>
-                    </div>
-                {% endfor %}
-            {% else %}
-                <p>Рецензии отсутствуют.</p>
-            {% endif %}
+<h2>Рецензии</h2>
+{% if reviews %}
+    <ul>
+        {% for review in reviews %}
+        <li>
+            <p>Оценка: {{ rating_choices[review.rating] }}</p>
+            <p>{{ review.text | safe }}</p>
+            <p>Автор: {{ review.user.login }}</p>
+            <hr>
+        </li>
+        {% endfor %}
+    </ul>
+{% else %}
+    <p>Пока нет рецензий. Вы можете быть первым!</p>
+{% endif %}
+
+{% if current_user.is_authenticated %}
+    {% if not user_review %}
+        <a href="{{ url_for('book_form.write_review', book_id=book.id) }}" class="btn btn-primary">Написать рецензию</a>
+    {% else %}
+        <div class="user-review">
+            <p>Ваша рецензия:</p>
+            <p>Оценка: {{ rating_choices[user_review.rating] }}</p>
+            <p>{{ user_review.text | safe }}</p>
         </div>
-    </div>
-</div>
+    {% endif %}
+{% endif %}
+
 {% endblock %}
