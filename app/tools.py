@@ -10,23 +10,20 @@ class CoverSaver:
         self.file = file
 
     def save(self):
-        self.img = self.__find_by_md5_hash()
-        if self.img is not None:
-            return self.img
-        filename = secure_filename(self.file.filename)
-        self.img = Cover(
-            filename=filename,
-            mime_type=self.file.mimetype,
-            md5_hash=self.md5_hash)
-        db.session.add(self.img)
-        self.file.save(
-            os.path.join(current_app.config['UPLOAD_FOLDER'],
-                        str(self.img.id) + os.path.splitext(filename)[1]))
-        return self.img
-
-
-    def __find_by_md5_hash(self):
-        self.md5_hash = hashlib.md5(self.file.read()).hexdigest()
-        self.file.seek(0)
-        return db.session.execute(db.select(Cover).filter(Cover.md5_hash == self.md5_hash)).scalar()
-
+        filename = self.file.filename
+        mime_type = self.file.mimetype
+        file_data = self.file.read()
+        
+        md5_hash = hashlib.md5(file_data).hexdigest()
+        storage_filename = f"{md5_hash}{os.path.splitext(filename)[1]}"
+        
+        upload_folder = current_app.config['UPLOAD_FOLDER']
+        filepath = os.path.join(upload_folder, storage_filename)
+        with open(filepath, 'wb') as f:
+            f.write(file_data)
+        
+        cover = Cover(filename=filename, mime_type=mime_type, md5_hash=md5_hash)
+        db.session.add(cover)
+        db.session.commit()
+        
+        return cover

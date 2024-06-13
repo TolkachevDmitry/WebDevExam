@@ -1,10 +1,9 @@
 {% extends "base.html" %}
-{% import "macros.html" as macros %}
+
+{% block title %}Редактировать книгу{% endblock %}
 
 {% block content %}
 <h1>Редактировать книгу</h1>
-<form action="{{ url_for('book_form.edit_book', book_id=book.id) }}" method="POST">
-    {{ macros.book_form(book) }}
-    <button type="submit" class="btn btn-primary">Сохранить</button>
-</form>
+{% from "books/book_form.html" import book_form %}
+{{ book_form(book, genres) }}
 {% endblock %}

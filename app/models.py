@@ -6,7 +6,7 @@ from werkzeug.security import check_password_hash, generate_password_hash
 from flask_login import UserMixin
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
-from sqlalchemy import String, ForeignKey, DateTime, Text, Integer, MetaData, Column
+from sqlalchemy import String, ForeignKey, DateTime, Text, Integer, MetaData, Column, Table
 
 class Base(DeclarativeBase):
     metadata = MetaData(naming_convention={
@@ -42,6 +42,9 @@ class User(Base, UserMixin):
 
     role: Mapped["Role"] = relationship()
 
+    def has_role(self, role):
+        return self.role == role
+
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
 
@@ -55,13 +58,8 @@ class User(Base, UserMixin):
     def __repr__(self):
         return '<User %r>' % self.login
     
-books_genres = db.Table(
-    'books_genres',
-    Column('book_id', Integer, ForeignKey('books.id')),
-    Column('genre_id', Integer, ForeignKey('genres.id'))
-)
 
-class Genre(Base, db.Model):
+class Genre(db.Model):
     __tablename__ = 'genres'
 
     id: Mapped[int] = mapped_column(primary_key=True)
@@ -72,13 +70,15 @@ class Genre(Base, db.Model):
 class Cover(Base):
     __tablename__ = 'covers'
 
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    filename: Mapped[str] = mapped_column(String(255))
-    mime_type: Mapped[str] = mapped_column(String(255))
-    md5_hash: Mapped[str] = mapped_column(String(255))
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    filename = Column(String(255))
+    mime_type = Column(String(255))
+    md5_hash = Column(String(255))
+
+    book = relationship('Book', back_populates='cover')
 
     def __repr__(self):
-        return '<Image %r>' % self.filename
+        return f'<Cover {self.filename}>'
 
     @property
     def storage_filename(self):
@@ -89,16 +89,44 @@ class Cover(Base):
     def url(self):
         return url_for('image', image_id=self.id)
 
+books_genres = Table('book_genre', Base.metadata,
+    Column('book_id', Integer, ForeignKey('books.id', ondelete='CASCADE'), primary_key=True),
+    Column('genre_id', Integer, ForeignKey('genres.id', ondelete='CASCADE'), primary_key=True)
+)
+
 class Book(Base):
     __tablename__ = 'books'
 
-    id: Mapped[int] = mapped_column(primary_key=True)
-    title: Mapped[str] = mapped_column(String(255))
-    description: Mapped[str] = mapped_column(Text)
-    year: Mapped[int] = mapped_column(Integer)
-    publisher: Mapped[str] = mapped_column(String(255))
-    author: Mapped[str] = mapped_column(String(255))
-    pages: Mapped[int] = mapped_column(Integer)
-    cover_id: Mapped[int] = mapped_column(ForeignKey('covers.id'))
-    cover: Mapped[Cover] = relationship('Cover')
-    genres: Mapped[Genre] = relationship('Genre', secondary=books_genres, backref='books')
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    title = Column(String(255), nullable=False)
+    description = Column(Text, nullable=False)
+    year = Column(Integer, nullable=False)
+    publisher = Column(String(255), nullable=False)
+    author = Column(String(255), nullable=False)
+    pages = Column(Integer, nullable=False)
+    cover_id = Column(Integer, ForeignKey('covers.id', ondelete='CASCADE'), nullable=True)
+    cover = relationship('Cover', back_populates='book', cascade='all, delete-orphan', single_parent=True)
+    genres = relationship('Genre', secondary=books_genres, back_populates='books')
+
+
+
+Genre.books = relationship("Book", secondary=books_genres, back_populates="genres")
+
+class Review(db.Model):
+    __tablename__ = 'reviews'
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    book_id = Column(Integer, ForeignKey('books.id', ondelete='CASCADE'), nullable=False)
+    user_id = Column(Integer, ForeignKey('users.id', ondelete='CASCADE'), nullable=False)
+    rating = Column(Integer, nullable=False)
+    text = Column(Text, nullable=False)
+    date_added = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+    book = relationship('Book', back_populates='reviews')
+    user = relationship('User', back_populates='reviews')
+
+    def __repr__(self):
+        return f'<Review {self.id}>'
+
+Book.reviews = relationship('Review', back_populates='book')
+User.reviews = relationship('Review', back_populates='user')

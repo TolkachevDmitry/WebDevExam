@@ -1,0 +1,53 @@
+{% macro book_form(book, genres) %}
+<form method="post" enctype="multipart/form-data">
+    <div class="mb-3">
+        <label for="title" class="form-label">Название:</label>
+        <input type="text" id="title" name="title" class="form-control" value="{{ book.title or '' }}" required>
+    </div>
+    <div class="mb-3">
+        <label for="author" class="form-label">Автор:</label>
+        <input type="text" id="author" name="author" class="form-control" value="{{ book.author or '' }}" required>
+    </div>
+    <div class="mb-3">
+        <label for="description">Описание книги:</label>
+        <textarea name="description" id="description">{{ book.description | safe}}</textarea>
+    </div>    
+    <div class="mb-3">
+        <label for="year" class="form-label">Год издания:</label>
+        <input type="number" id="year" name="year" class="form-control" value="{{ book.year or '' }}" required>
+    </div>
+    <div class="mb-3">
+        <label for="publisher" class="form-label">Издательство:</label>
+        <input type="text" id="publisher" name="publisher" class="form-control" value="{{ book.publisher or '' }}" required>
+    </div>
+    <div class="mb-3">
+        <label for="pages" class="form-label">Количество страниц:</label>
+        <input type="number" id="pages" name="pages" class="form-control" value="{{ book.pages or '' }}" required>
+    </div>
+    <label  for="pages" class="form-label">Жанр</label>
+    <div class="mb-3">
+        <select name="genres" id="genres" multiple>
+            {% for genre in genres %}
+                <option value="{{ genre.id }}" {% if genre in book.genres %} selected {% endif %}>{{ genre.name }}</option>
+            {% endfor %}
+        </select>    
+    </div>
+    {% if request.endpoint == "book_form.book_create" %}
+    <div class="mb-3">
+        <label for="cover" class="form-label">Обложка:</label>
+        <input type="file" id="cover" name="cover" class="form-control" accept="image/*" required>
+    </div>
+    <button type="submit" class="btn btn-primary">{{ 'Добавить' }}</button>
+    {% endif %}
+    {% if request.endpoint == "book_form.edit_book" %}
+        <button type="submit" class="btn btn-primary">{{ 'Сохранить' }}</button>
+    {% endif %}
+</form>
+
+<script src="https://unpkg.com/easymde/dist/easymde.min.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/easymde/dist/easymde.min.css">
+
+<script>
+    var easyMDE = new EasyMDE({ element: document.getElementById('description') });
+</script>
+{% endmacro %}

@@ -1,14 +1,9 @@
 {% extends "base.html" %}
-{% import "macros.html" as macros %}
+
+{% block title %}Добавить книгу{% endblock %}
 
 {% block content %}
 <h1>Добавить книгу</h1>
-<form action="{{ url_for('book_form.add_book') }}" method="POST" enctype="multipart/form-data">
-    {{ macros.book_form() }}
-    <div class="mb-3">
-        <label for="cover" class="form-label">Обложка</label>
-        <input type="file" class="form-control" id="cover" name="cover">
-    </div>
-    <button type="submit" class="btn btn-primary">Сохранить</button>
-</form>
+{% from "books/book_form.html" import book_form %}
+{{ book_form(book, genres) }}
 {% endblock %}
