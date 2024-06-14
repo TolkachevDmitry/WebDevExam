@@ -2,7 +2,7 @@ import hashlib
 import uuid
 import os
 from werkzeug.utils import secure_filename
-from flask import current_app
+from flask import current_app,flash
 from models import db, Cover
 
 class CoverSaver:
@@ -15,6 +15,11 @@ class CoverSaver:
         file_data = self.file.read()
         
         md5_hash = hashlib.md5(file_data).hexdigest()
+        existing_cover = db.session.query(Cover).filter_by(md5_hash=md5_hash).first()
+
+        if existing_cover:
+            return None
+        
         storage_filename = f"{md5_hash}{os.path.splitext(filename)[1]}"
         
         upload_folder = current_app.config['UPLOAD_FOLDER']
@@ -26,4 +31,4 @@ class CoverSaver:
         db.session.add(cover)
         db.session.commit()
         
-        return cover
+        return cover.id

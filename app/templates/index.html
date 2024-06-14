@@ -5,7 +5,7 @@
 {% block content %}
 <h1>Список книг</h1>
 
-{% if books %}
+{% if book_stats %}
 <table class="table">
     <thead>
         <tr>
@@ -19,37 +19,41 @@
         </tr>
     </thead>
     <tbody>
-        {% for book in books %}
+        {% for stats in book_stats %}
         <tr>
-            <td>{{ book.title }}</td>
-            <td>{{ book.author }}</td>
+            <td>{{ stats.book.title }}</td>
+            <td>{{ stats.book.author }}</td>
             <td>
-                {% for genre in book.genres %}
+                {% for genre in stats.book.genres %}
                     {{ genre.name }}{% if not loop.last %}, {% endif %}
                 {% endfor %}
             </td>
-            <td>{{ book.year }}</td>
-            <td>{{ book.average_rating }}</td>
-            <td>{{ book.review_count }}</td>
+            <td>{{ stats.book.year }}</td>
+            <td>{{ stats.average_rating }}</td>
+            <td>{{ stats.review_count }}</td>
             <td>
-                <a href="{{ url_for('book_form.view_book', book_id=book.id) }}" class="btn btn-info">Просмотр</a>
-                <a href="{{ url_for('book_form.edit_book', book_id=book.id) }}" class="btn btn-warning">Редактирование</a>
-                <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal-{{ book.id }}" data-book-id="{{ book.id }}" data-book-title="{{ book.title }}">
-                    Удалить
-                </button>                 
-                <div class="modal fade" id="deleteModal-{{ book.id }}" tabindex="-1" aria-labelledby="deleteModalLabel-{{ book.id }}" aria-hidden="true">
+                <a href="{{ url_for('book_form.view_book', book_id=stats.book.id) }}" class="btn btn-info">Просмотр</a>
+                {% if current_user.is_authenticated and (current_user.has_role(1) or current_user.has_role(2)) %}
+                    <a href="{{ url_for('book_form.edit_book', book_id=stats.book.id) }}" class="btn btn-success btn-sm">Редактировать</a>
+                {% endif %}
+                {% if current_user.is_authenticated and current_user.has_role(1) %}
+                    <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal-{{ stats.book.id }}" data-book-id="{{ stats.book.id }}" data-book-title="{{ stats.book.title }}">
+                        Удалить
+                    </button>       
+                {% endif %}          
+                <div class="modal fade" id="deleteModal-{{ stats.book.id }}" tabindex="-1" aria-labelledby="deleteModalLabel-{{ stats.book.id }}" aria-hidden="true">
                     <div class="modal-dialog">
                         <div class="modal-content">
                             <div class="modal-header">
-                                <h5 class="modal-title" id="deleteModalLabel-{{ book.id }}">Удаление книги</h5>
+                                <h5 class="modal-title" id="deleteModalLabel-{{ stats.book.id }}">Удаление книги</h5>
                                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                             </div>
                             <div class="modal-body">
-                                Вы уверены, что хотите удалить книгу <span id="bookTitle-{{ book.id }}"></span>?
+                                Вы уверены, что хотите удалить книгу <span id="bookTitle-{{ stats.book.id }}"></span>?
                             </div>
                             <div class="modal-footer">
                                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Нет</button>
-                                <form action="{{ url_for('book_form.delete_book', book_id=book.id) }}" method="post" style="display:inline;">
+                                <form action="{{ url_for('book_form.delete_book', book_id=stats.book.id) }}" method="post" style="display:inline;">
                                     <button type="submit" class="btn btn-danger">Да</button>
                                 </form>
                             </div>
@@ -62,10 +66,19 @@
     </tbody>
 </table>
 
+{% if books_pog.has_prev %}
+    <a href="{{ url_for('index', page=books_pog.prev_num) }}" class="btn btn-primary">Предыдущая</a>
+{% endif %}
+{% if books_pog.has_next %}
+    <a href="{{ url_for('index', page=books_pog.next_num) }}" class="btn btn-primary">Следующая</a>
+{% endif %}
+
 {% else %}
 <p>Книги не найдены.</p>
 {% endif %}
 
-<a href="{{ url_for('book_form.book_create') }}" class="btn btn-primary">Добавить книгу</a>
+{% if current_user.is_authenticated and current_user.has_role(1) %}
+    <a href="{{ url_for('book_form.book_create') }}" class="btn btn-primary">Добавить книгу</a>
+{% endif %}
 
 {% endblock %}

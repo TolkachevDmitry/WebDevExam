@@ -42,8 +42,8 @@ class User(Base, UserMixin):
 
     role: Mapped["Role"] = relationship()
 
-    def has_role(self, role):
-        return self.role == role
+    def has_role(self, role_id):
+        return self.role_id == role_id if self.role_id else False
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -87,7 +87,7 @@ class Cover(Base):
 
     @property
     def url(self):
-        return url_for('image', image_id=self.id)
+        return url_for('image', image_hash=self.md5_hash)
 
 books_genres = Table('book_genre', Base.metadata,
     Column('book_id', Integer, ForeignKey('books.id', ondelete='CASCADE'), primary_key=True),

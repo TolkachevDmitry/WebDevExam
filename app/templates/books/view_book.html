@@ -5,15 +5,13 @@
 {% block content %}
 <h1>{{ book.title }}</h1>
 {% if book.cover %}
-    {% set mime_directory = book.cover.mime_type.split('/')[1] %}
-    <img src="{{ url_for('static', filename='images/' ~ mime_directory ~ '/' ~ book.cover.filename) }}" alt="Обложка книги {{ book.title }}">
+    <img src="{{ url_for('images', image_id=cover.id) }}" alt="Обложка книги {{ book.title }}" class="img-fluid" style="max-width: 300px;">
 {% else %}
     <p>Обложка отсутствует</p>
 {% endif %}
 <p>Автор: {{ book.author }}</p>
 <p>Год издания: {{ book.year }}</p>
-<p>Описание: {{ book.description }}</p>
-
+<p>Описание: {{ book.description | safe}}</p>
 <h2>Рецензии</h2>
 {% if reviews %}
     <ul>
@@ -41,5 +39,7 @@
         </div>
     {% endif %}
 {% endif %}
+
+<a href="{{ url_for('index') }}" class="btn btn-primary">Назад к списку</a>
 
 {% endblock %}
