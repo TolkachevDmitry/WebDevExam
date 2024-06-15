@@ -7,6 +7,7 @@ import bleach
 from markdown2 import markdown 
 import os
 from bleach import clean
+from view import track_book_view
 
 book_form_bp = Blueprint('book_form', __name__, url_prefix='/book_form')
 
@@ -19,7 +20,7 @@ ALLOWED_ATTRIBUTES = {
 @book_form_bp.route('/book_create', methods=['GET', 'POST'])
 @login_required
 def book_create():
-    if current_user.role_id == 1:  # Проверка роли по role_id
+    if current_user.has_role(1):
         genres = Genre.query.all()
         book = Book()
         if request.method == 'POST':
@@ -38,7 +39,8 @@ def book_create():
                 cover_file = request.files['cover']
                 if cover_file:
                     cover_saver = CoverSaver(cover_file)
-                    cover_id = cover_saver.save()
+                    cover = cover_saver.save()
+                    cover_id = cover.id
                     if cover_id is None:
                         flash('Файл с таким хэшем уже существует. Пожалуйста, загрузите другое изображение.', 'danger')
                         return render_template('books/add_book.html', genres=genres, book=book, form_data=request.form)
@@ -64,7 +66,7 @@ def book_create():
             except Exception as e:
                 db.session.rollback()
                 flash(f'При сохранении данных возникла ошибка: {str(e)}', 'danger')
-                return render_template('books/add_book.html', genres=genres, book=book, form_data=request.form)
+                return render_template('books/add_book.html', genres=genres,book=book, form_data=request.form)
     else:
         flash('У вас недостаточно прав для выполнения данного действия', 'warning')
         return redirect(url_for('index'))
@@ -153,18 +155,24 @@ RATING_CHOICES = {
 @book_form_bp.route('/book/<int:book_id>', methods=['GET'])
 def view_book(book_id):
     book = db.session.query(Book).filter_by(id=book_id).first_or_404()
-    if not book:
+    if book:
+        if current_user.is_authenticated:
+            track_book_view(current_user.id, book_id)
+        else:
+            track_book_view(None, book_id)
+
+        reviews = db.session.query(Review).filter_by(book_id=book_id).all()
+        user_review = None
+        
+        if current_user.is_authenticated:
+            user_review = db.session.query(Review).filter_by(book_id=book_id, user_id=current_user.id).first()
+        cover = book.cover
+
+        return render_template('books/view_book.html', book=book, reviews=reviews, user_review=user_review, rating_choices=RATING_CHOICES, cover=cover)
+    
+    else:
         flash("Книга не найдена", "danger")
         return redirect(url_for('index'))
-
-    reviews = db.session.query(Review).filter_by(book_id=book_id).all()
-    user_review = None
-    if current_user.is_authenticated:
-        user_review = db.session.query(Review).filter_by(book_id=book_id, user_id=current_user.id).first()
-
-    cover = book.cover
-
-    return render_template('books/view_book.html', book=book, reviews=reviews, user_review=user_review, rating_choices=RATING_CHOICES, cover=cover)
 
 @book_form_bp.route('/book/<int:book_id>/write_review', methods=['GET', 'POST'])
 @login_required

@@ -130,3 +130,14 @@ class Review(db.Model):
 
 Book.reviews = relationship('Review', back_populates='book')
 User.reviews = relationship('Review', back_populates='user')
+
+class BookView(db.Model):
+    __tablename__ = 'book_views'
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    book_id = Column(Integer, ForeignKey('books.id', ondelete='CASCADE'), nullable=False)
+    user_id = Column(Integer, ForeignKey('users.id', ondelete='CASCADE'))
+    view_date = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+    book = relationship('Book', backref='views')
+    user = relationship('User', backref='viewed_books')
