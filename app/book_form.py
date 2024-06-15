@@ -1,12 +1,10 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request, current_app
 from flask_login import login_required, current_user
-from models import db, Book, Genre, Cover, Review
+from models import db, Book, Genre, Review
 from tools import CoverSaver
-from werkzeug.utils import secure_filename
 import bleach
 from markdown2 import markdown 
 import os
-from bleach import clean
 from view import track_book_view
 
 book_form_bp = Blueprint('book_form', __name__, url_prefix='/book_form')
@@ -39,8 +37,7 @@ def book_create():
                 cover_file = request.files['cover']
                 if cover_file:
                     cover_saver = CoverSaver(cover_file)
-                    cover = cover_saver.save()
-                    cover_id = cover.id
+                    cover_id = cover_saver.save()
                     if cover_id is None:
                         flash('Файл с таким хэшем уже существует. Пожалуйста, загрузите другое изображение.', 'danger')
                         return render_template('books/add_book.html', genres=genres, book=book, form_data=request.form)
@@ -70,6 +67,7 @@ def book_create():
     else:
         flash('У вас недостаточно прав для выполнения данного действия', 'warning')
         return redirect(url_for('index'))
+    
     return render_template('books/add_book.html', genres=genres, book=book)
 
 @book_form_bp.route('/book/<int:book_id>/edit', methods=['GET', 'POST'])
@@ -110,6 +108,7 @@ def edit_book(book_id):
     else:
         flash('У вас недостаточно прав для выполнения данного действия', 'warning')
         return redirect(url_for('index'))
+    
     return render_template('books/edit_book.html', genres=genres, book=book)
 
 
@@ -163,7 +162,7 @@ def view_book(book_id):
 
         reviews = db.session.query(Review).filter_by(book_id=book_id).all()
         user_review = None
-        
+
         if current_user.is_authenticated:
             user_review = db.session.query(Review).filter_by(book_id=book_id, user_id=current_user.id).first()
         cover = book.cover

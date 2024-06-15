@@ -1,7 +1,6 @@
-from flask import request,session
-from datetime import datetime, timedelta
+from flask import session
+from datetime import datetime
 from models import db, BookView
-from flask_login import current_user
 
 def track_book_view(user_id, book_id):
     today = datetime.utcnow().date()
@@ -27,7 +26,7 @@ def track_book_view(user_id, book_id):
     db.session.commit()
 
     # Добавляем book_id в сессию для неавторизованных пользователей
-    if not user_id:  # Если user_id равен None (для неавторизованных пользователей)
+    if not user_id:
         recent_book_ids = session.get('recent_book_ids', [])
         if book_id not in recent_book_ids:
             recent_book_ids.insert(0, book_id)
